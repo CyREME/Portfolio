@@ -1,0 +1,34 @@
+name: Deploy to Infomaniak
+
+# Ce script se lance à chaque fois que tu fais un push sur la branche main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connexion SSH et Déploiement
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            # 1. On se rend dans le dossier de ton site (basé sur tes logs précédents)
+            cd sites/e-cellier.fr
+            
+            # 2. On annule toute modification locale imprévue et on tire le nouveau code
+            git reset --hard HEAD
+            git pull origin main
+            
+            # 3. On met à jour les paquets Node.js (au cas où tu en as ajouté)
+            npm install
+            
+            # 4. On force Infomaniak à redémarrer l'application Node.js
+            # Infomaniak utilise Passenger, cette commande est le standard pour redémarrer
+            mkdir -p tmp
+            touch tmp/restart.txt
